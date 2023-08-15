@@ -1,0 +1,10 @@
+*.lib
+*.exp
+*.pdb
+.vs
+x64
+Debug
+Release
+q225acu/src/fmt
+q225acu/src/json
+q225acu/src/x64
