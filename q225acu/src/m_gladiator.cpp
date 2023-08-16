@@ -25,14 +25,36 @@ static int sound_idle;
 static int sound_search;
 static int sound_sight;
 
+/*
+*
+* NOTE(gnemeth): Em3raldTig3r's BFGladiator sounds
+*
+*/
+static int bfglad_sound_pain1;
+static int bfglad_sound_pain2;
+static int bfglad_sound_gun;
+static int bfglad_die;
+static int bfglad_idle;
+static int bfglad_sight;
+
 MONSTERINFO_IDLE(gladiator_idle) (edict_t *self) -> void
 {
-	gi.sound(self, CHAN_VOICE, sound_idle, 1, ATTN_IDLE, 0);
+	if (strcmp(self->classname, "monster_bfgladiator") == 0) {
+		gi.sound(self, CHAN_VOICE, bfglad_idle, 1, ATTN_IDLE, 0);
+	}
+	else {
+		gi.sound(self, CHAN_VOICE, sound_idle, 1, ATTN_IDLE, 0);
+	}
 }
 
 MONSTERINFO_SIGHT(gladiator_sight) (edict_t *self, edict_t *other) -> void
 {
-	gi.sound(self, CHAN_VOICE, sound_sight, 1, ATTN_NORM, 0);
+	if (strcmp(self->classname, "monster_bfgladiator") == 0) {
+		gi.sound(self, CHAN_VOICE, bfglad_sight, 1, ATTN_NORM, 0);
+	}
+	else {
+		gi.sound(self, CHAN_VOICE, sound_sight, 1, ATTN_NORM, 0);
+	}
 }
 
 MONSTERINFO_SEARCH(gladiator_search) (edict_t *self) -> void
@@ -152,7 +174,12 @@ void GladiatorGun(edict_t *self)
 	dir = self->pos1 - start;
 	dir.normalize();
 
-	monster_fire_railgun(self, start, dir, 50, 100, MZ2_GLADIATOR_RAILGUN_1);
+	if (strcmp(self->classname, "monster_bfgladiator") == 0) {
+		monster_fire_bfg(self, start, dir, 25, 300, 100, 300, MZ2_MAKRON_BFG);
+	}
+	else {
+		monster_fire_railgun(self, start, dir, 50, 100, MZ2_GLADIATOR_RAILGUN_1);
+	}
 }
 
 mframe_t gladiator_frames_attack_gun[] = {
@@ -278,10 +305,22 @@ PAIN(gladiator_pain) (edict_t *self, edict_t *other, float kick, int damage, con
 
 	self->pain_debounce_time = level.time + 3_sec;
 
-	if (frandom() < 0.5f)
-		gi.sound(self, CHAN_VOICE, sound_pain1, 1, ATTN_NORM, 0);
-	else
-		gi.sound(self, CHAN_VOICE, sound_pain2, 1, ATTN_NORM, 0);
+	if (strcmp(self->classname, "monster_bfgladiator") == 0) {
+		if (frandom() < 0.5) {
+			gi.sound(self, CHAN_VOICE, bfglad_sound_pain1, 1, ATTN_NORM, 0);
+		}
+		else {
+			gi.sound(self, CHAN_VOICE, bfglad_sound_pain2, 1, ATTN_NORM, 0);
+		}
+	}
+	else {
+		if (frandom() < 0.5) {
+			gi.sound(self, CHAN_VOICE, sound_pain1, 1, ATTN_NORM, 0);
+		}
+		else {
+			gi.sound(self, CHAN_VOICE, sound_pain2, 1, ATTN_NORM, 0);
+		}
+	}
 
 	if (!M_ShouldReactToPain(self, mod))
 		return; // no pain anims in nightmare
@@ -365,10 +404,17 @@ DIE(gladiator_die) (edict_t *self, edict_t *inflictor, edict_t *attacker, int da
 		return;
 
 	// regular death
-	gi.sound(self, CHAN_BODY, sound_die, 1, ATTN_NORM, 0);
+	if (strcmp(self->classname, "monster_bfgladiator") == 0) {
+		gi.sound(self, CHAN_BODY, bfglad_die, 1, ATTN_NORM, 0);
+	}
+	else {
+		gi.sound(self, CHAN_BODY, sound_die, 1, ATTN_NORM, 0);
+	}
 
+/*
 	if (brandom())
 		gi.sound(self, CHAN_VOICE, sound_die2, 1, ATTN_NORM, 0);
+*/
 
 	self->deadflag = true;
 	self->takedamage = true;
@@ -411,7 +457,7 @@ void SP_monster_gladiator(edict_t *self)
 	self->movetype = MOVETYPE_STEP;
 	self->solid = SOLID_BBOX;
 	self->s.modelindex = gi.modelindex("models/monsters/gladiatr/tris.md2");
-	
+
 	gi.modelindex("models/monsters/gladiatr/gibs/chest.md2");
 	gi.modelindex("models/monsters/gladiatr/gibs/head.md2");
 	gi.modelindex("models/monsters/gladiatr/gibs/larm.md2");
@@ -486,4 +532,100 @@ void SP_monster_gladiator(edict_t *self)
 void SP_monster_gladb(edict_t *self)
 {
 	SP_monster_gladiator(self);
+}
+
+/**
+*
+* NOTE(gnemeth): Em3raldTig3r's monster_bfgladiator for Q25
+*
+*/
+
+/*QUAKED monster_gladiator (1 .5 0) (-32 -32 -24) (32 32 40) Ambush Trigger_Spawn Sight GoodGuy NoGib
+*/
+
+void SP_monster_bfgladiator(edict_t* self)
+{
+	if (deathmatch->value)
+	{
+		G_FreeEdict(self);
+		return;
+	}
+
+	bfglad_sound_pain1 = gi.soundindex("bfgladiator/pain.wav");
+	bfglad_sound_pain2 = gi.soundindex("bfgladiator/pain2.wav");
+	bfglad_die = gi.soundindex("bfgladiator/glddeth2.wav");
+	bfglad_sound_gun = gi.soundindex("bfgladiator/glattack.wav");
+	bfglad_idle = gi.soundindex("bfgladiator/gldidle1.wav");
+	bfglad_sight = gi.soundindex("bfgladiator/sight.wav");
+
+	sound_pain1 = gi.soundindex("gladiator/pain.wav");
+	sound_pain2 = gi.soundindex("gladiator/gldpain2.wav");
+	sound_die = gi.soundindex("gladiator/glddeth2.wav");
+	sound_gun = gi.soundindex("gladiator/railgun.wav");
+	sound_cleaver_swing = gi.soundindex("gladiator/melee1.wav");
+	sound_cleaver_hit = gi.soundindex("gladiator/melee2.wav");
+	sound_cleaver_miss = gi.soundindex("gladiator/melee3.wav");
+	sound_idle = gi.soundindex("gladiator/gldidle1.wav");
+	sound_search = gi.soundindex("gladiator/gldsrch1.wav");
+	sound_sight = gi.soundindex("gladiator/sight.wav");
+
+	self->movetype = MOVETYPE_STEP;
+	self->solid = SOLID_BBOX;
+
+	// Lazarus: special purpose skins
+#if 0
+	if (self->style)
+	{
+		PatchMonsterModel("models/monsters/bfgladiatr/tris.md2");
+		self->s.skinnum = self->style * 2;
+	}
+#endif
+
+	self->s.modelindex = gi.modelindex("models/monsters/bfgladiatr/tris.md2");
+	self->mins = {-32, -32, -24};
+	self->maxs = {32, 32, 40};
+
+	if (!self->health)
+		self->health = 500;
+	if (!self->gib_health)
+		self->gib_health = -175;
+	if (!self->mass)
+		self->mass = 400;
+
+	self->pain = gladiator_pain;
+	self->die = gladiator_die;
+
+	self->monsterinfo.stand = gladiator_stand;
+	self->monsterinfo.walk = gladiator_walk;
+	self->monsterinfo.run = gladiator_run;
+	self->monsterinfo.dodge = NULL;
+	self->monsterinfo.attack = gladiator_attack;
+	self->monsterinfo.melee = gladiator_melee;
+	self->monsterinfo.sight = gladiator_sight;
+	self->monsterinfo.idle = gladiator_idle;
+	self->monsterinfo.search = gladiator_search;
+	self->monsterinfo.blocked = gladiator_blocked;		// PGM
+
+#if 0
+	// Lazarus
+	if (self->powerarmor)
+	{
+		if (self->powerarmortype == 1)
+			self->monsterinfo.power_armor_type = POWER_ARMOR_SCREEN;
+		else
+			self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
+		self->monsterinfo.power_armor_power = self->powerarmor;
+	}
+	if (!self->monsterinfo.flies)
+		self->monsterinfo.flies = 0.05;
+
+	self->common_name = "BFGladiator";
+	self->class_id = ENTITY_MONSTER_BFGLADIATOR;
+#endif
+
+	gi.linkentity(self);
+	M_SetAnimation(self, &gladiator_move_stand);
+	self->monsterinfo.scale = MODEL_SCALE;
+
+	walkmonster_start(self);
 }

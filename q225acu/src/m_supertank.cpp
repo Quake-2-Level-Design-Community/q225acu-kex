@@ -430,7 +430,7 @@ PAIN(supertank_pain) (edict_t *self, edict_t *other, float kick, int damage, con
 		gi.sound(self, CHAN_VOICE, sound_pain2, 1, ATTN_NORM, 0);
 
 	self->pain_debounce_time = level.time + 3_sec;
-	
+
 	if (!M_ShouldReactToPain(self, mod))
 		return; // no pain anims in nightmare
 
@@ -656,7 +656,7 @@ void SP_monster_supertank(edict_t *self)
 	self->movetype = MOVETYPE_STEP;
 	self->solid = SOLID_BBOX;
 	self->s.modelindex = gi.modelindex("models/monsters/boss1/tris.md2");
-	
+
 	gi.modelindex("models/monsters/boss1/gibs/cgun.md2");
 	gi.modelindex("models/monsters/boss1/gibs/chest.md2");
 	gi.modelindex("models/monsters/boss1/gibs/core.md2");

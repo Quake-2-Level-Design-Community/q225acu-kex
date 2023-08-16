@@ -124,6 +124,7 @@ void SP_misc_lavaball(edict_t *ent);
 
 void SP_monster_berserk(edict_t *self);
 void SP_monster_gladiator(edict_t *self);
+void SP_monster_bfgladiator(edict_t *self);
 void SP_monster_gunner(edict_t *self);
 void SP_monster_infantry(edict_t *self);
 void SP_monster_soldier_light(edict_t *self);
@@ -334,6 +335,7 @@ static const std::initializer_list<spawn_t> spawns = {
 
 	{ "monster_berserk", SP_monster_berserk },
 	{ "monster_gladiator", SP_monster_gladiator },
+	{ "monster_bfgladiator", SP_monster_bfgladiator },
 	{ "monster_gunner", SP_monster_gunner },
 	{ "monster_infantry", SP_monster_infantry },
 	{ "monster_soldier_light", SP_monster_soldier_light },
@@ -728,7 +730,7 @@ static const std::initializer_list<field_t> entity_fields = {
 	FIELD_AUTO_NAMED("fog_density_off", fog.density_off),
 	FIELD_AUTO_NAMED("fog_sky_factor", fog.sky_factor),
 	FIELD_AUTO_NAMED("fog_sky_factor_off", fog.sky_factor_off),
-	
+
 	FIELD_AUTO_NAMED("heightfog_falloff", heightfog.falloff),
 	FIELD_AUTO_NAMED("heightfog_density", heightfog.density),
 	FIELD_AUTO_NAMED("heightfog_start_color", heightfog.start_color),
@@ -871,7 +873,7 @@ void ED_ParseField(const char *key, const char *value, edict_t *ent)
 		// found it
 		if (f.load_func)
 			f.load_func(&st, value);
-		
+
 		return;
 	}
 
@@ -913,7 +915,7 @@ const char *ED_ParseEdict(const char *data, edict_t *ent)
 
 	init = false;
 	st = {};
-	
+
 	// go through all the dictionary pairs
 	while (1)
 	{
@@ -1303,7 +1305,7 @@ static void G_InitStatusbar()
 
 	// timer
 	sb.ifstat(STAT_TIMER_ICON).xv(262).num(2, STAT_TIMER).xv(296).pic(STAT_TIMER_ICON).endifstat();
-	
+
 	sb.yb(-50);
 
 	// help / weapon icon
@@ -1375,7 +1377,7 @@ static void G_InitStatusbar()
 		sb.ifstat(STAT_CTF_TEAMINFO).xl(0).yb(-88).stat_string(STAT_CTF_TEAMINFO).endifstat();
 	}
 	else
-	{ 
+	{
 		// dm
 		// frags
 		sb.xr(-50).yt(2).num(3, STAT_FRAGS);
@@ -1545,7 +1547,7 @@ void SP_worldspawn(edict_t *ent)
 	}
 
 	snd_fry = gi.soundindex("player/fry.wav"); // standing in lava / slime
-	
+
 	PrecacheItem(GetItemByIndex(IT_ITEM_COMPASS));
 	PrecacheItem(GetItemByIndex(IT_WEAPON_BLASTER));
 
