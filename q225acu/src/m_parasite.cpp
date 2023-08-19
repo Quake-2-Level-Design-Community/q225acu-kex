@@ -883,7 +883,7 @@ PAIN(parasite_pain) (edict_t *self, edict_t *other, float kick, int damage, cons
 		gi.sound(self, CHAN_VOICE, sound_pain1, 1, ATTN_NORM, 0);
 	else
 		gi.sound(self, CHAN_VOICE, sound_pain2, 1, ATTN_NORM, 0);
-	
+
 	if (!M_ShouldReactToPain(self, mod))
 		return; // no pain anims in nightmare
 
@@ -925,7 +925,7 @@ void SP_monster_parasite(edict_t *self)
 	gi.modelindex("models/monsters/parasite/segment/tris.md2");
 
 	self->s.modelindex = gi.modelindex("models/monsters/parasite/tris.md2");
-	
+
 	gi.modelindex("models/monsters/parasite/gibs/head.md2");
 	gi.modelindex("models/monsters/parasite/gibs/chest.md2");
 	gi.modelindex("models/monsters/parasite/gibs/bleg.md2");
