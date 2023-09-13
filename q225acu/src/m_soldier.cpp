@@ -23,6 +23,13 @@ static int sound_death;
 static int sound_death_ss;
 static int sound_cock;
 
+static int	q25_sound_idle;
+static int	q25_sound_sight1;
+static int	q25_sound_sight2;
+static int	q25_sound_cock;
+static int	q25_sound_pain;
+static int	q25_sound_death;
+
 void soldier_start_charge(edict_t *self)
 {
 	self->monsterinfo.aiflags |= AI_CHARGING;
@@ -35,16 +42,28 @@ void soldier_stop_charge(edict_t *self)
 
 void soldier_idle(edict_t *self)
 {
+	int local_sound_idle;
+	if (!strcmp(self->classname, "monster_soldier_dist"))
+		local_sound_idle = q25_sound_idle;
+	else
+		local_sound_idle = sound_idle;
+
 	if (frandom() > 0.8f)
-		gi.sound(self, CHAN_VOICE, sound_idle, 1, ATTN_IDLE, 0);
+		gi.sound(self, CHAN_VOICE, local_sound_idle, 1, ATTN_IDLE, 0);
 }
 
 void soldier_cock(edict_t *self)
 {
-	if (self->s.frame == FRAME_stand322)
-		gi.sound(self, CHAN_WEAPON, sound_cock, 1, ATTN_IDLE, 0);
+	int local_sound_cock;
+	if (!strcmp(self->classname, "monster_soldier_dist"))
+		local_sound_cock = q25_sound_cock;
 	else
-		gi.sound(self, CHAN_WEAPON, sound_cock, 1, ATTN_NORM, 0);
+		local_sound_cock = sound_cock;
+
+	if (self->s.frame == FRAME_stand322)
+		gi.sound(self, CHAN_WEAPON, local_sound_cock, 1, ATTN_IDLE, 0);
+	else
+		gi.sound(self, CHAN_WEAPON, local_sound_cock, 1, ATTN_NORM, 0);
 
 	// [Paril-KEX] reset cockness
 	self->dmg = 0;
@@ -427,13 +446,20 @@ PAIN(soldier_pain) (edict_t *self, edict_t *other, float kick, int damage, const
 
 	self->pain_debounce_time = level.time + 3_sec;
 
-	n = self->count | 1;
-	if (n == 1)
-		gi.sound(self, CHAN_VOICE, sound_pain_light, 1, ATTN_NORM, 0);
-	else if (n == 3)
-		gi.sound(self, CHAN_VOICE, sound_pain, 1, ATTN_NORM, 0);
+	if (!strcmp(self->classname, "monster_soldier_dist"))
+	{
+		gi.sound(self, CHAN_VOICE, q25_sound_pain, 1, ATTN_NORM, 0);
+	}
 	else
-		gi.sound(self, CHAN_VOICE, sound_pain_ss, 1, ATTN_NORM, 0);
+	{
+		n = self->count | 1;
+		if (n == 1)
+			gi.sound(self, CHAN_VOICE, sound_pain_light, 1, ATTN_NORM, 0);
+		else if (n == 3)
+			gi.sound(self, CHAN_VOICE, sound_pain, 1, ATTN_NORM, 0);
+		else
+			gi.sound(self, CHAN_VOICE, sound_pain_ss, 1, ATTN_NORM, 0);
+	}
 
 	if (self->velocity[2] > 100)
 	{
@@ -444,7 +470,7 @@ PAIN(soldier_pain) (edict_t *self, edict_t *other, float kick, int damage, const
 		soldierh_hyper_laser_sound_end(self);
 		return;
 	}
-	
+
 	if (!M_ShouldReactToPain(self, mod))
 		return; // no pain anims in nightmare
 
@@ -491,6 +517,7 @@ void soldier_fire_vanilla(edict_t *self, int flash_number, bool angle_limited)
 	vec3_t					 aim_norm;
 	float					 angle;
 	vec3_t					 aim_good;
+	trace_t 				 tr;
 
 	if (self->count < 2)
 		flash_index = blaster_flash[flash_number];
@@ -557,6 +584,27 @@ void soldier_fire_vanilla(edict_t *self, int flash_number, bool angle_limited)
 		aim.normalize();
 	}
 
+// monster_soldier_dist firing routine
+	if (!strcmp(self->classname, "monster_soldier_dist"))
+	{
+		tr = gi.trace(start, vec3_origin, vec3_origin, end, self, MASK_SHOT);
+
+		if (tr.ent != world)
+		{
+			if (tr.ent->svflags & SVF_MONSTER || tr.ent->client || tr.ent->takedamage)
+			{
+				if (tr.ent->health > 0) {
+					monster_fire_tracker(self, start, aim, 25, 500, tr.ent, MZ2_WIDOW_DISRUPTOR);
+					return;
+				}
+			}
+		}
+
+		monster_fire_tracker(self, start, aim, 25, 500, NULL, MZ2_WIDOW_DISRUPTOR);
+		return;
+	}
+// end monster_soldier_dist firing routine
+
 	if (self->count <= 1)
 	{
 		monster_fire_blaster(self, start, aim, 5, 600, flash_index, EF_BLASTER);
@@ -599,7 +647,7 @@ PRETHINK(soldierh_laser_update) (edict_t *laser) -> void
 
 	if (!self->deadflag)
 		PredictAim(self, self->enemy, start, 0, false, frandom(0.1f, 0.2f), &forward, nullptr);
-	
+
 	laser->s.origin = start;
 	laser->movedir = forward;
 	gi.linkentity(laser);
@@ -665,7 +713,7 @@ void soldier_fire_xatrix(edict_t *self, int flash_number, bool angle_limited)
 			aim_norm = aim;
 			aim_norm.normalize();
 			angle = aim_norm.dot(forward);
-			
+
 			if (angle < 0.5f) // ~25 degree angle
 			{
 				if (level.time >= self->monsterinfo.fire_wait)
@@ -1181,7 +1229,7 @@ MONSTERINFO_ATTACK(soldier_attack) (edict_t *self) -> void
 				attack1_possible = false;
 			else
 				attack1_possible = M_CheckClearShot(self, monster_flash_offset[MZ2_SOLDIER_BLASTER_1]);
-			
+
 			bool attack2_possible = M_CheckClearShot(self, monster_flash_offset[MZ2_SOLDIER_BLASTER_2]);
 
 			if (attack1_possible && (!attack2_possible || frandom() < 0.5f))
@@ -1216,10 +1264,23 @@ MONSTERINFO_ATTACK(soldier_attack) (edict_t *self) -> void
 
 MONSTERINFO_SIGHT(soldier_sight) (edict_t *self, edict_t *other) -> void
 {
-	if (frandom() < 0.5f)
-		gi.sound(self, CHAN_VOICE, sound_sight1, 1, ATTN_NORM, 0);
+	int local_sound_sight1;
+	int local_sound_sight2;
+	if (!strcmp(self->classname, "monster_soldier_dist"))
+	{
+		local_sound_sight1 = q25_sound_sight1;
+		local_sound_sight2 = q25_sound_sight2;
+	}
 	else
-		gi.sound(self, CHAN_VOICE, sound_sight2, 1, ATTN_NORM, 0);
+	{
+		local_sound_sight1 = sound_sight1;
+		local_sound_sight2 = sound_sight2;
+	}
+
+	if (frandom() < 0.5f)
+		gi.sound(self, CHAN_VOICE, local_sound_sight1, 1, ATTN_NORM, 0);
+	else
+		gi.sound(self, CHAN_VOICE, local_sound_sight2, 1, ATTN_NORM, 0);
 
 	if (self->enemy && (range_to(self, self->enemy) >= RANGE_NEAR) &&
 		visible(self, self->enemy) // Paril: don't run-shoot if we can't see them
@@ -1278,7 +1339,7 @@ static bool soldier_prone_shoot_ok(edict_t *self)
 
 	if (v < 0.80f)
 		return false;
-	
+
 	return true;
 }
 
@@ -1676,15 +1737,21 @@ DIE(soldier_die) (edict_t *self, edict_t *inflictor, edict_t *attacker, int dama
 	// regular death
 	self->deadflag = true;
 	self->takedamage = true;
-	
-	n = self->count | 1;
 
-	if (n == 1)
-		gi.sound(self, CHAN_VOICE, sound_death_light, 1, ATTN_NORM, 0);
-	else if (n == 3)
-		gi.sound(self, CHAN_VOICE, sound_death, 1, ATTN_NORM, 0);
-	else // (n == 5)
-		gi.sound(self, CHAN_VOICE, sound_death_ss, 1, ATTN_NORM, 0);
+	if (!strcmp(self->classname, "monster_soldier_dist"))
+	{
+		gi.sound(self, CHAN_VOICE, q25_sound_death, 1, ATTN_NORM, 0);
+	}
+	else
+	{
+		n = self->count | 1;
+		if (n == 1)
+			gi.sound(self, CHAN_VOICE, sound_death_light, 1, ATTN_NORM, 0);
+		else if (n == 3)
+			gi.sound(self, CHAN_VOICE, sound_death, 1, ATTN_NORM, 0);
+		else // (n == 5)
+			gi.sound(self, CHAN_VOICE, sound_death_ss, 1, ATTN_NORM, 0);
+	}
 
 	if (fabsf((self->s.origin[2] + self->viewheight) - point[2]) <= 4 &&
 		self->velocity.z < 65.f)
@@ -1831,7 +1898,21 @@ constexpr spawnflags_t SPAWNFLAG_SOLDIER_BLIND = 8_spawnflag;
 
 void SP_monster_soldier_x(edict_t *self)
 {
-	self->s.modelindex = gi.modelindex("models/monsters/soldier/tris.md2");
+	if (!strcmp(self->classname, "monster_soldier_dist"))
+	{
+		q25_sound_pain = gi.soundindex ("soldrq25/pain.wav");
+		q25_sound_death = gi.soundindex ("soldrq25/deth3.wav");
+		q25_sound_idle =	gi.soundindex ("soldrq25/idle.wav");
+		q25_sound_sight1 =	gi.soundindex ("soldrq25/sight1.wav");
+		q25_sound_sight2 =	gi.soundindex ("soldrq25/sight2.wav");
+		q25_sound_cock =	gi.soundindex ("infantry/infatck3.wav");
+		self->s.modelindex = gi.modelindex("models/monsters/soldrq25/tris.md2");
+	}
+	else
+	{
+		self->s.modelindex = gi.modelindex("models/monsters/soldier/tris.md2");
+	}
+
 	self->monsterinfo.scale = MODEL_SCALE;
 	self->mins = { -16, -16, -24 };
 	self->maxs = { 16, 16, 32 };
@@ -1842,7 +1923,7 @@ void SP_monster_soldier_x(edict_t *self)
 	sound_sight1 = gi.soundindex("soldier/solsght1.wav");
 	sound_sight2 = gi.soundindex("soldier/solsrch1.wav");
 	sound_cock = gi.soundindex("infantry/infatck3.wav");
-	
+
 	gi.modelindex("models/monsters/soldier/gibs/head.md2");
 	gi.modelindex("models/monsters/soldier/gibs/gun.md2");
 	gi.modelindex("models/monsters/soldier/gibs/arm.md2");
@@ -2040,3 +2121,33 @@ void SP_monster_soldier_lasergun(edict_t *self)
 }
 
 // END 13-APR-98
+
+void SP_monster_soldier_dist(edict_t* self)
+{
+	float r;
+
+	if (deathmatch->value)
+	{
+		G_FreeEdict(self);
+		return;
+	}
+
+	// cache these like widow2 does?
+	gi.soundindex ("weapons/disrupt.wav");
+	gi.soundindex ("weapons/disint2.wav");
+	gi.modelindex ("models/proj/disintegrator/tris.md2");
+
+	if (!self->health)
+		self->health = 80;
+	if (!self->gib_health)
+		self->gib_health = -40;
+
+	// PMM - blindfire
+	self->monsterinfo.blindfire = true;
+
+	// Knightmare- call generic spawn function LAST, because it
+	// calls walkmonster_start, which the health and everything else need to be set up for
+	SP_monster_soldier_x(self);
+
+	self->count = self->s.skinnum = 0;
+}

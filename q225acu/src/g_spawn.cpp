@@ -218,6 +218,8 @@ void SP_info_ctf_teleport_destination(edict_t *self);
 
 void SP_monster_shambler(edict_t* self);
 
+void SP_monster_soldier_dist(edict_t* self);
+
 // clang-format off
 static const std::initializer_list<spawn_t> spawns = {
 	{ "info_player_start", SP_info_player_start },
@@ -341,6 +343,7 @@ static const std::initializer_list<spawn_t> spawns = {
 	{ "monster_soldier_light", SP_monster_soldier_light },
 	{ "monster_soldier", SP_monster_soldier },
 	{ "monster_soldier_ss", SP_monster_soldier_ss },
+	{ "monster_soldier_dist", SP_monster_soldier_dist },
 	{ "monster_tank", SP_monster_tank },
 	{ "monster_tank_commander", SP_monster_tank },
 	{ "monster_medic", SP_monster_medic },

@@ -77,9 +77,9 @@ void monster_fire_railgun(edict_t *self, const vec3_t &start, const vec3_t &aimd
 }
 
 void monster_fire_bfg(edict_t *self, const vec3_t &start, const vec3_t &aimdir, int damage, int speed, int kick,
-					  float damage_radius, monster_muzzleflash_id_t flashtype)
+					  float damage_radius, monster_muzzleflash_id_t flashtype, bool homing)
 {
-	fire_bfg(self, start, aimdir, damage, speed, damage_radius);
+	fire_bfg(self, start, aimdir, damage, speed, damage_radius, homing);
 	monster_muzzleflash(self, start, flashtype);
 }
 
@@ -107,7 +107,7 @@ bool M_CheckClearShot(edict_t *self, const vec3_t &offset, vec3_t &start)
 	vec3_t target;
 
 	bool is_blind = self->monsterinfo.attack_state == AS_BLIND || (self->monsterinfo.aiflags & (AI_MANUAL_STEERING | AI_LOST_SIGHT));
-	
+
 	if (is_blind)
 		target = self->monsterinfo.blind_fire_target;
 	else
@@ -693,13 +693,13 @@ void M_ProcessPain(edict_t *e)
 
 			if (!(e->monsterinfo.aiflags & AI_DO_NOT_COUNT) && !(e->spawnflags & SPAWNFLAG_MONSTER_DEAD))
 				G_MonsterKilled(e);
-		
+
 			e->touch = nullptr;
 			monster_death_use(e);
 		}
 
 		e->die(e, e->monsterinfo.damage_inflictor, e->monsterinfo.damage_attacker, e->monsterinfo.damage_blood, e->monsterinfo.damage_from, e->monsterinfo.damage_mod);
-		
+
 		// [Paril-KEX] medic commander only gets his slots back after the monster is gibbed, since we can revive them
 		if (e->health <= e->gib_health)
 		{
@@ -1373,7 +1373,7 @@ void monster_start_go(edict_t *self)
 						self->s.origin[0] = check[0] + adjust[x];
 						self->s.origin[1] = check[1] + adjust[y];
 						self->s.origin[2] = check[2] + adjust[z];
-						
+
 						if (self->monsterinfo.aiflags & AI_GOOD_GUY)
 						{
 							is_stuck = gi.trace(self->s.origin, self->mins, self->maxs, self->s.origin, self, MASK_MONSTERSOLID).startsolid;
@@ -1479,7 +1479,7 @@ void monster_start_go(edict_t *self)
 		if (!spawn_dead)
 			self->monsterinfo.stand(self);
 	}
-	
+
 	if (spawn_dead)
 	{
 		// to spawn dead, we'll mimick them dying naturally

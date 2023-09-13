@@ -194,7 +194,7 @@ struct spawnflags_t
 	{
 		return value;
 	}
-	
+
 	// has any flags at all (!!a)
 	constexpr bool any() const { return !!value; }
 	// has any of the given flags (!!(a & b))
@@ -590,7 +590,7 @@ public:
 
 		return *this;
 	}
-	
+
 	constexpr const value_type pointer() const { return value; }
 	constexpr const save_data_list_t *save_list() const { return list; }
 	constexpr const char *name() const { return value ? list->name : "null"; }
@@ -954,7 +954,7 @@ enum item_id_t : int32_t {
 	IT_TECH_STRENGTH,
 	IT_TECH_HASTE,
 	IT_TECH_REGENERATION,
-	
+
 	IT_ITEM_FLASHLIGHT,
 	IT_ITEM_COMPASS,
 
@@ -1198,7 +1198,7 @@ struct level_locals_t
 	gtime_t	 disguise_violation_time;
 	int32_t  disguise_icon; // [Paril-KEX]
 	// ROGUE
-	
+
 	int32_t shadow_light_count; // [Sam-KEX]
 	bool is_n64;
 	gtime_t coop_level_restart_time; // restart the level after this time
@@ -1218,7 +1218,7 @@ struct level_locals_t
 	float coop_health_scaling;
 	// this isn't saved in the save file, but stores
 	// the amount of players currently active in the
-	// level, compared against monsters' individual 
+	// level, compared against monsters' individual
 	// scale #
 	int32_t coop_scale_players;
 
@@ -2105,7 +2105,7 @@ void monster_fire_rocket(edict_t *self, const vec3_t &start, const vec3_t &dir, 
 void monster_fire_railgun(edict_t *self, const vec3_t &start, const vec3_t &aimdir, int damage, int kick,
 						  monster_muzzleflash_id_t flashtype);
 void monster_fire_bfg(edict_t *self, const vec3_t &start, const vec3_t &aimdir, int damage, int speed, int kick,
-					  float damage_radius, monster_muzzleflash_id_t flashtype);
+					  float damage_radius, monster_muzzleflash_id_t flashtype, bool homing);
 bool M_CheckClearShot(edict_t *self, const vec3_t &offset);
 bool M_CheckClearShot(edict_t *self, const vec3_t &offset, vec3_t &start);
 vec3_t M_ProjectFlashSource(edict_t *self, const vec3_t &offset, const vec3_t &forward, const vec3_t &right);
@@ -2245,7 +2245,7 @@ void rocket_touch(edict_t *ent, edict_t *other, const trace_t &tr, bool other_to
 edict_t *fire_rocket(edict_t *self, const vec3_t &start, const vec3_t &dir, int damage, int speed, float damage_radius,
 				 int radius_damage);
 void fire_rail(edict_t *self, const vec3_t &start, const vec3_t &aimdir, int damage, int kick);
-void fire_bfg(edict_t *self, const vec3_t &start, const vec3_t &dir, int damage, int speed, float damage_radius);
+void fire_bfg(edict_t *self, const vec3_t &start, const vec3_t &dir, int damage, int speed, float damage_radius, bool homing);
 // RAFAEL
 void fire_ionripper(edict_t *self, const vec3_t &start, const vec3_t &aimdir, int damage, int speed, effects_t effect);
 void fire_heat(edict_t *self, const vec3_t &start, const vec3_t &dir, int damage, int speed, float damage_radius,
@@ -2266,7 +2266,7 @@ constexpr size_t MAX_PIERCE = 16;
 
 // base class for pierce args; this stores
 // the stuff we are piercing.
-struct pierce_args_t 
+struct pierce_args_t
 {
 	// stuff we pierced
 	std::array<edict_t *, MAX_PIERCE> pierced;
@@ -3244,10 +3244,10 @@ public:
 	// note: index is not affected by filter. it is up to
 	// the caller to ensure this index is filtered.
 	constexpr entity_iterator_t(uint32_t i, uint32_t end_index = -1) : index(i), end_index((end_index >= globals.num_edicts) ? globals.num_edicts : end_index) { }
-	
+
 	inline reference operator*() { throw_if_out_of_range(); return &g_edicts[index]; }
 	inline pointer operator->() { throw_if_out_of_range(); return &g_edicts[index]; }
-	
+
 	inline entity_iterator_t &operator++()
 	{
 		throw_if_out_of_range();
@@ -3268,7 +3268,7 @@ public:
 	inline entity_iterator_t operator+(const difference_type &offset) const
 	{
 		entity_iterator_t it(index + offset, end_index);
-		
+
 		// move in the specified direction, only stopping if we
 		// run out of range or find a filtered entity
 		while (!is_out_of_range(it.index) && !filter(*it))
@@ -3279,7 +3279,7 @@ public:
 
 	// + -1 and - 1 are the same (and - -1 & + 1)
 	inline entity_iterator_t operator-(const difference_type &offset) const { return *this + (-offset); }
-	
+
 	// comparison. hopefully this won't break anything, but == and != use the
 	// clamped index (so -1 and num_edicts will be equal technically since they
 	// are the same "invalid" entity) but <= and >= will affect them properly.

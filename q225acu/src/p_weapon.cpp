@@ -1188,7 +1188,7 @@ void Throw_Generic(edict_t *ent, int FRAME_FIRE_LAST, int FRAME_IDLE_LAST, int F
 				ent->client->weaponstate = WEAPON_READY;
 				ent->client->weapon_fire_buffered = false;
 				Weapon_SetFinished(ent);
-				
+
 				if (extra_idle_frame)
 					ent->client->ps.gunframe = FRAME_IDLE_LAST + 1;
 
@@ -1248,7 +1248,7 @@ void weapon_grenadelauncher_fire(edict_t *ent)
 	gi.multicast(ent->s.origin, MULTICAST_PVS, false);
 
 	PlayerNoise(ent, start, PNOISE_WEAPON);
-	
+
 	G_RemoveAmmo(ent);
 }
 
@@ -1296,7 +1296,7 @@ void Weapon_RocketLauncher_Fire(edict_t *ent)
 	gi.multicast(ent->s.origin, MULTICAST_PVS, false);
 
 	PlayerNoise(ent, start, PNOISE_WEAPON);
-	
+
 	G_RemoveAmmo(ent);
 }
 
@@ -1514,7 +1514,7 @@ void Machinegun_Fire(edict_t *ent)
 	gi.multicast(ent->s.origin, MULTICAST_PVS, false);
 
 	PlayerNoise(ent, start, PNOISE_WEAPON);
-	
+
 	G_RemoveAmmo(ent);
 
 	ent->client->anim_priority = ANIM_ATTACK;
@@ -1655,7 +1655,7 @@ void Chaingun_Fire(edict_t *ent)
 	gi.multicast(ent->s.origin, MULTICAST_PVS, false);
 
 	PlayerNoise(ent, start, PNOISE_WEAPON);
-	
+
 	G_RemoveAmmo(ent, shots);
 }
 
@@ -1705,7 +1705,7 @@ void weapon_shotgun_fire(edict_t *ent)
 	gi.multicast(ent->s.origin, MULTICAST_PVS, false);
 
 	PlayerNoise(ent, start, PNOISE_WEAPON);
-	
+
 	G_RemoveAmmo(ent);
 }
 
@@ -1727,7 +1727,7 @@ void weapon_supershotgun_fire(edict_t *ent)
 		damage *= damage_multiplier;
 		kick *= damage_multiplier;
 	}
-	
+
 	vec3_t start, dir;
 	// Paril: kill sideways angle on hitscan
 	P_ProjectSource(ent, ent->client->v_angle, { 0, 0, -8 }, start, dir);
@@ -1753,7 +1753,7 @@ void weapon_supershotgun_fire(edict_t *ent)
 	gi.multicast(ent->s.origin, MULTICAST_PVS, false);
 
 	PlayerNoise(ent, start, PNOISE_WEAPON);
-	
+
 	G_RemoveAmmo(ent);
 }
 
@@ -1799,7 +1799,7 @@ void weapon_railgun_fire(edict_t *ent)
 	gi.multicast(ent->s.origin, MULTICAST_PVS, false);
 
 	PlayerNoise(ent, start, PNOISE_WEAPON);
-	
+
 	G_RemoveAmmo(ent);
 }
 
@@ -1851,7 +1851,7 @@ void weapon_bfg_fire(edict_t *ent)
 
 	vec3_t start, dir;
 	P_ProjectSource(ent, ent->client->v_angle, { 8, 8, -8 }, start, dir);
-	fire_bfg(ent, start, dir, damage, 400, damage_radius);
+	fire_bfg(ent, start, dir, damage, 400, damage_radius, false);
 
 	P_AddWeaponKick(ent, ent->client->v_forward * -2, { -20.f, 0, crandom() * 8 });
 	ent->client->kick.total = DAMAGE_TIME();
@@ -1864,7 +1864,7 @@ void weapon_bfg_fire(edict_t *ent)
 	gi.multicast(ent->s.origin, MULTICAST_PVS, false);
 
 	PlayerNoise(ent, start, PNOISE_WEAPON);
-	
+
 	G_RemoveAmmo(ent);
 }
 

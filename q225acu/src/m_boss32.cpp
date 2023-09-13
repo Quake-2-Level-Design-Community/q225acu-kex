@@ -249,7 +249,7 @@ THINK(makron_torso_think) (edict_t *self) -> void
 {
 	if (++self->s.frame >= 365)
 		self->s.frame = 346;
-	
+
 	self->nextthink = level.time + 10_hz;
 
 	if (self->s.angles[0] > 0)
@@ -443,7 +443,7 @@ void makronBFG(edict_t *self)
 	dir = vec - start;
 	dir.normalize();
 	gi.sound(self, CHAN_VOICE, sound_attack_bfg, 1, ATTN_NORM, 0);
-	monster_fire_bfg(self, start, dir, 50, 300, 100, 300, MZ2_MAKRON_BFG);
+	monster_fire_bfg(self, start, dir, 50, 300, 100, 300, MZ2_MAKRON_BFG, false);
 }
 
 mframe_t makron_frames_attack3[] = {
@@ -605,7 +605,7 @@ PAIN(makron_pain) (edict_t *self, edict_t *other, float kick, int damage, const 
 			}
 		}
 	}
-	
+
 	if (!M_ShouldReactToPain(self, mod))
 		return; // no pain anims in nightmare
 

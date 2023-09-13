@@ -2,6 +2,9 @@
 // Licensed under the GNU General Public License 2.0.
 #include "g_local.h"
 
+static constexpr float BFG_HOMING_SENSITIVITY = 1;
+static constexpr spawnflags_t SPAWNFLAG_BFG_HOMING = 1_spawnflag;
+
 /*
 =================
 fire_hit
@@ -520,7 +523,7 @@ THINK(Grenade4_Think) (edict_t *self) -> void
 		Grenade_Explode(self);
 		return;
 	}
-	
+
 	if (self->velocity)
 	{
 		float p = self->s.angles.x;
@@ -842,7 +845,7 @@ void fire_rail(edict_t *self, const vec3_t &start, const vec3_t &aimdir, int dam
 	};
 
 	contents_t mask = MASK_PROJECTILE | CONTENTS_SLIME | CONTENTS_LAVA;
-	
+
 	// [Paril-KEX]
 	if (self->client && !G_ShouldPlayersCollide(true))
 		mask &= ~CONTENTS_PLAYER;
@@ -1031,11 +1034,19 @@ struct bfg_laser_pierce_t : pierce_args_t
 	vec3_t	 dir;
 	int		 damage;
 
+		// Phatman: Used for homing BFG
+	edict_t *closest;
+	edict_t *ignore;
+	float   distance;
+
 	inline bfg_laser_pierce_t(edict_t *self, vec3_t dir, int damage) :
 		pierce_args_t(),
 		self(self),
 		dir(dir),
-		damage(damage)
+		damage(damage),
+		closest(NULL),
+		ignore(NULL),
+		distance(0)
 	{
 	}
 
@@ -1060,9 +1071,23 @@ struct bfg_laser_pierce_t : pierce_args_t
 			return false;
 		}
 
+		// Phatman: Homing BFG shot
+		if ((self->spawnflags.has(SPAWNFLAG_BFG_HOMING)) && tr.ent->client)
+		{
+			vec3_t diff;
+			float len;
+			diff = self->s.origin - tr.ent->s.origin;
+			len = diff.length();
+			if (!closest || len < distance)
+			{
+				closest = tr.ent;
+				distance = len;
+			}
+		}
+
 		if (!mark(tr.ent))
 			return false;
-		
+
 		return true;
 	}
 };
@@ -1124,8 +1149,25 @@ THINK(bfg_think) (edict_t *self) -> void
 			dir,
 			dmg
 		};
-		
+
 		pierce_trace(start, end, self, args, CONTENTS_SOLID | CONTENTS_MONSTER | CONTENTS_PLAYER | CONTENTS_DEADMONSTER);
+
+		// Phatman: Homing BFG shot - based on homing_think
+		if ((self->spawnflags.has(SPAWNFLAG_BFG_HOMING)) && args.closest)
+		{
+			static const float HomingSensitivity = BFG_HOMING_SENSITIVITY;
+			vec3_t new_velocity;
+			float speed;
+
+			point = args.closest->absmin + (args.closest->size * 0.5);
+			new_velocity = self->velocity;
+			dir = point - self->s.origin;
+			dir = dir.normalized() * HomingSensitivity;
+			dir = dir + new_velocity;
+			self->movedir = dir.normalized();
+			speed = self->velocity.length();
+			self->velocity = dir * speed;
+		}
 
 		gi.WriteByte(svc_temp_entity);
 		gi.WriteByte(TE_BFG_LASER);
@@ -1137,7 +1179,7 @@ THINK(bfg_think) (edict_t *self) -> void
 	self->nextthink = level.time + 10_hz;
 }
 
-void fire_bfg(edict_t *self, const vec3_t &start, const vec3_t &dir, int damage, int speed, float damage_radius)
+void fire_bfg(edict_t *self, const vec3_t &start, const vec3_t &dir, int damage, int speed, float damage_radius, bool homing)
 {
 	edict_t *bfg;
 
@@ -1162,6 +1204,8 @@ void fire_bfg(edict_t *self, const vec3_t &start, const vec3_t &dir, int damage,
 	bfg->dmg_radius = damage_radius;
 	bfg->classname = "bfg blast";
 	bfg->s.sound = gi.soundindex("weapons/bfg__l1a.wav");
+	if (homing) // Phatman: Required for homing BFG shots
+		bfg->spawnflags |= SPAWNFLAG_BFG_HOMING;
 
 	bfg->think = bfg_think;
 	bfg->nextthink = level.time + FRAME_TIME_S;

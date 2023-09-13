@@ -447,7 +447,7 @@ PAIN(jorg_pain) (edict_t *self, edict_t *other, float kick, int damage, const mo
 
 	if (!M_ShouldReactToPain(self, mod))
 		return; // no pain anims in nightmare
-	
+
 	jorg_attack1_end_sound(self);
 
 	if (damage <= 50)
@@ -481,7 +481,7 @@ void jorgBFG(edict_t *self)
 	dir = vec - start;
 	dir.normalize();
 	gi.sound(self, CHAN_WEAPON, sound_bfg_fire, 1, ATTN_NORM, 0);
-	monster_fire_bfg(self, start, dir, 50, 300, 100, 200, MZ2_JORG_BFG_1);
+	monster_fire_bfg(self, start, dir, 50, 300, 100, 200, MZ2_JORG_BFG_1, false);
 }
 
 void jorg_firebullet_right(edict_t *self)
@@ -678,7 +678,7 @@ void SP_monster_jorg(edict_t *self)
 	self->solid = SOLID_BBOX;
 	self->s.modelindex = gi.modelindex("models/monsters/boss3/jorg/tris.md2");
 	self->s.modelindex2 = gi.modelindex("models/monsters/boss3/rider/tris.md2");
-	
+
 	gi.modelindex("models/monsters/boss3/jorg/gibs/chest.md2");
 	gi.modelindex("models/monsters/boss3/jorg/gibs/foot.md2");
 	gi.modelindex("models/monsters/boss3/jorg/gibs/gun.md2");
